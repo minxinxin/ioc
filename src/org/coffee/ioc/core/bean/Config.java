@@ -3,7 +3,7 @@ package org.coffee.ioc.core.bean;
 import org.coffee.ioc.core.processor.BeanProcessor;
 
 
-public interface BeanConfig {
+public interface Config {
 
 	/**
 	 * 构建一个bean 到 Config中, 如果已经存在同名bean, 则抛出运行时异常
@@ -22,12 +22,12 @@ public interface BeanConfig {
 	 * @param packpath 扫描路径, 非空(所以不能直接从root路径扫描)
 	 * @throws packpath 为空, 运行时错误
 	 * */
-	BeanConfig addAutoScanPath(String packpath);
+	Config addAutoScanPath(String packpath);
 	/**
 	 * 添加Bean处理器
 	 * @param processor 非空参数
 	 * @throws processor 为空或者 没有实现指定接口
 	 * */
-	BeanConfig addProcessor(BeanProcessor processor);
+	Config addProcessor(BeanProcessor processor);
 	
 }
