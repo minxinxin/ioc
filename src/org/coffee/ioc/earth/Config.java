@@ -1,4 +1,4 @@
-package org.coffee.core;
+package org.coffee.ioc.earth;
 
 import java.util.HashMap;
 import java.util.HashSet;
