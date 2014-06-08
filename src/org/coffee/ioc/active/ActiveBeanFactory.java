@@ -1,5 +1,6 @@
 package org.coffee.ioc.active;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,8 @@ import org.coffee.ioc.core.bean.Bean;
 import org.coffee.ioc.core.bean.BeanFactory;
 import org.coffee.ioc.core.bean.Config;
 import org.coffee.ioc.core.bean.Property;
+import org.coffee.ioc.core.factory.FactoryBean;
+import org.coffee.ioc.core.lifecycle.BeanLifeCycle;
 import org.coffee.ioc.core.processor.Processor;
 
 
@@ -35,7 +38,6 @@ public class ActiveBeanFactory implements BeanFactory{
 		this.processors = config.getProcessors();
 		this.typeCache = new HashMap<Class<?>,String[]>(10);
 		this.checkPrototypes = new ThreadLocal<Set<String>>();
-		
 		if(this.beans == null || this.processors == null)
 			throw new RuntimeException("beans 或者 processors 不能为null, 初始化BeanFactory失败");
 		
@@ -70,15 +72,42 @@ public class ActiveBeanFactory implements BeanFactory{
 	public Object getBean(String name) {
 		if(name == null || name.trim().equals(""))
 			throw new RuntimeException("name不能为null或者为空");
-		
-		Bean bean = this.beans.get(name);
+		String beanName = name;
+		//是否是获取FactoryBean类型的name
+		boolean isGetFactoryBean = false;
+		//去除&符号
+		while (beanName.startsWith(BeanFactory.FACTORY_BEAN_PREFIX)) {
+			isGetFactoryBean = true;
+			beanName = beanName.substring(BeanFactory.FACTORY_BEAN_PREFIX.length());
+		}
+		Bean bean = this.beans.get(beanName);
 		if(bean == null)
 			return null;
 		//检查单例缓存是否存在该对象
-		Object o = this.singletos.get(name);
+		Object o = this.singletos.get(beanName);
 		//如果没有则直接构建一个新的Object
 		if(o == null)
 			o = createBean(bean);
+		if(isGetFactoryBean){
+			if(o instanceof FactoryBean){
+				return o;
+			}else{
+				throw new RuntimeException(o.toString()+"不是FactoryBean类型的Bean");
+			}
+		}
+		if(o instanceof FactoryBean){
+			FactoryBean fb = (FactoryBean)o;
+			if(bean.isSingleton() && fb.isSingleton()){
+				o = this.singletos.get(beanName+"#FactoryBean");
+				if(o  == null){
+					o = fb.getObject();
+					this.singletos.put(beanName+"#FactoryBean", o);
+				}
+			}else{
+				o = fb.getObject();
+			}
+			
+		}
 		return o;
 	}
 
@@ -103,9 +132,13 @@ public class ActiveBeanFactory implements BeanFactory{
 		Object inst  = null;
 		
 		try {
-			inst = bean.getClass0().newInstance();
-			//插入到容器中
-			this.singletos.put(bean.getName(), inst);
+
+			Constructor<?> c = bean.getClass0().getDeclaredConstructor();
+			c.setAccessible(true);
+			inst = c.newInstance();
+			//如果是单例类型的Bean
+			if(bean.isSingleton())
+				this.singletos.put(bean.getName(), inst);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -153,7 +186,23 @@ public class ActiveBeanFactory implements BeanFactory{
 				throw new RuntimeException(e);
 			}
 		}
-		
+		//生命周期处理
+		if(inst instanceof BeanLifeCycle){
+			BeanLifeCycle blc = (BeanLifeCycle)inst;
+			blc.setBeanName(bean.getName());
+			blc.setBeanFactory(this);
+		}
+		for(Processor p : this.processors){
+			p.beforeInit(inst);
+		}
+		if(inst instanceof BeanLifeCycle){
+			BeanLifeCycle blc = (BeanLifeCycle)inst;
+			blc.init();
+		}
+		for(Processor p : this.processors){
+			p.afterInit(inst);
+		}
+		//结束生成
 		if(beginePrototype)
 			this.checkPrototypes.remove();
 		return inst;
@@ -166,7 +215,7 @@ public class ActiveBeanFactory implements BeanFactory{
 		if(names == null)
 			return null;
 		if(names.length != 1){
-			throw new RuntimeException("容器中有多个同类型或者子类型的Bean对象");
+			throw new RuntimeException("容器中有多个同类型或者子类型的Bean对象"+class0);
 		}
 		String name = names[0];
 		return (T) getBean(name);
@@ -203,5 +252,23 @@ public class ActiveBeanFactory implements BeanFactory{
 		if(bean == null)
 			throw new RuntimeException("没有指定名字的bean");
 		return bean.isSingleton();
+	}
+	public void closeBeanFactory() {
+		for(String key : this.singletos.keySet()){
+			Object o = this.singletos.get(key);
+			for(Processor p : this.processors){
+				p.destroy(o);
+			}
+			if(o instanceof BeanLifeCycle){
+				BeanLifeCycle blc = (BeanLifeCycle)o;
+				blc.destroy();
+			}
+		}
+		this.beans = null;
+		this.checkPrototypes = null;
+		this.processors = null;
+		this.singletos = null;
+		this.typeCache = null;
+		
 	}
 }

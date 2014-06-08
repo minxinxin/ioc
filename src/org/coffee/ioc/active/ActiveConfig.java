@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Enumeration;
@@ -59,8 +60,9 @@ public class ActiveConfig implements Config{
 			throw new RuntimeException("路径不符合规范, 应该为org.coffee格式");
 		//对路径中的Class对象进行填写到Bean中
 		for(Class<?> class0  : getClasses(packpath)){
-			//忽略接口类型Class
-			if(!class0.isInterface()){
+			//忽略接口 和 abstact以及私有类型的class
+			int mod = class0.getModifiers();
+			if(!Modifier.isInterface(mod) && !Modifier.isAbstract(mod) ){
 				Component compoent = class0.getAnnotation(Component.class);
 				if(compoent != null){
 					Bean bean = null;
@@ -79,6 +81,9 @@ public class ActiveConfig implements Config{
 
 						for(Field field : cls.getDeclaredFields()){
 							Autowired autowired  = field.getAnnotation(Autowired.class);
+							//忽略没有标记的属性
+							if(autowired == null)
+								continue;
 							if(autowired.value().equals("")){
 								//byType
 								bean.setPropertyByType(field.getName());

@@ -3,6 +3,7 @@ package org.coffee.ioc.core.bean;
 
 public interface BeanFactory {
 	
+	String FACTORY_BEAN_PREFIX = "&";
 	/**
 	 * 通过名字获得Bean对象
 	 * */
@@ -19,5 +20,10 @@ public interface BeanFactory {
 	 * 判断指定名字的Bean是否为单例类型
 	 * */
 	boolean isSingleton(String name);
+	
+	/**
+	 * 关闭BeanFactory
+	 * */
+	void closeBeanFactory();
 	
 }

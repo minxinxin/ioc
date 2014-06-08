@@ -5,4 +5,8 @@ package org.coffee.ioc.core.factory;
 public interface FactoryBean {
 	
 	Object getObject();
+	
+	public Class<?> getObjectType();
+	
+	public boolean isSingleton();
 }
