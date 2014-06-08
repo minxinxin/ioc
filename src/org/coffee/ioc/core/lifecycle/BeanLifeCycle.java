@@ -10,13 +10,13 @@ import org.coffee.ioc.core.bean.BeanFactory;
  * 		setProperties: 进行配置属性
  * 		setBeanName: 给Bean对象它自己的名字
  * 		setBeanFactory: 给Bean, 当前实例化它的Factory对象
- * 		BeanProcessor's beforeInit: 调用容器中所有@BeanProcessor处理器(每个Bean对象都会被处理)
+ * 		Processor's beforeInit: 调用容器中所有Processor处理器(每个Bean对象都会被处理)
  * 		init:如果实现了BeanLifeCycle接口调用init
- * 		BeanProcessor's afterInit  :调用容器中所有@BeanProcessor处理器(每个Bean对象都会被处理)
+ * 		Processor's afterInit  :调用容器中所有Processor处理器(每个Bean对象都会被处理)
  * 进入可以使用状态:
  * 		可以使用getBean方法获得容器中的Bean实例
  * 容器关闭:
- * 		BeanProcessor's destroy : 调用容器中所有@BeanProcessor处理器(每个Bean对象都会被处理)
+ * 		Processor's destroy : 调用容器中所有Processor处理器(每个Bean对象都会被处理)
  * 		destroy: 如果实现了BeanLifeCycle接口则调用destroy方法 .
  * </pre>
  * */

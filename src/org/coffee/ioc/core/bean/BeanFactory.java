@@ -10,7 +10,7 @@ public interface BeanFactory {
 	/**
 	 * 通过指定类型获取Bean对象
 	 * */
-	Object getBean(Class<?> class0);
+	<T>T getBean(Class<T> class0);
 	/**
 	 * 判断是否包含指定Bean名字的Bean对象
 	 * */

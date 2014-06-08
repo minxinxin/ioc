@@ -20,13 +20,13 @@ import org.coffee.ioc.core.annotation.Autowired;
 import org.coffee.ioc.core.annotation.Component;
 import org.coffee.ioc.core.bean.Bean;
 import org.coffee.ioc.core.bean.Config;
-import org.coffee.ioc.core.processor.BeanProcessor;
+import org.coffee.ioc.core.processor.Processor;
 
 public class ActiveConfig implements Config{
 
-	Map<String,ActiveBean> beans = new HashMap<String,ActiveBean>(10);
+	Map<String,Bean> beans = new HashMap<String,Bean>(10);
 	
-	Set<BeanProcessor> processors = new HashSet<BeanProcessor>(5);
+	Set<Processor> processors = new HashSet<Processor>(5);
 	
 	Pattern pattern = Pattern.compile("([a-zA-Z_]\\w*\\.)*[a-zA-Z_]\\w*");
 	
@@ -56,9 +56,10 @@ public class ActiveConfig implements Config{
 			throw new RuntimeException("路径不能为空");
 		Matcher  m = pattern.matcher(packpath);
 		if(!m.matches())
-			throw new RuntimeException("路径不符合规范, 应该为org.coffee");
+			throw new RuntimeException("路径不符合规范, 应该为org.coffee格式");
 		//对路径中的Class对象进行填写到Bean中
 		for(Class<?> class0  : getClasses(packpath)){
+			//忽略接口类型Class
 			if(!class0.isInterface()){
 				Component compoent = class0.getAnnotation(Component.class);
 				if(compoent != null){
@@ -82,6 +83,7 @@ public class ActiveConfig implements Config{
 								//byType
 								bean.setPropertyByType(field.getName());
 							}else{
+								//byName
 								bean.setPropertyByName(field.getName(), autowired.value());
 							}
 						}
@@ -92,7 +94,7 @@ public class ActiveConfig implements Config{
 		return this;
 	}
 
-	public Config addProcessor(BeanProcessor processor) {
+	public Config addProcessor(Processor processor) {
 		if(processor==null)
 			throw new RuntimeException("processor 不能为null");
 		processors.add(processor);
@@ -100,20 +102,19 @@ public class ActiveConfig implements Config{
 	}
 
 	
-	public Map<String, ActiveBean> getBeans() {
+	public Map<String, Bean> getBeans() {
 		return beans;
 	}
 
-	public Set<BeanProcessor> getProcessors() {
+	public Set<Processor> getProcessors() {
 		return processors;
 	}
 
 	//-----------------------------------------------------------
 
 	/**
-	 * 从包package中获取所有的Class
-	 *
-	 * @param pack
+	 * 从包package中获取所有的Class(不能从jar等介质中获取)
+	 * @param pack 路径名(org.coffee)
 	 * @return
 	 */
 	static Set <Class<?>> getClasses(String pack){
@@ -177,7 +178,7 @@ public class ActiveConfig implements Config{
 	            // 如果是java类文件 去掉后面的.class 只留下类名
 	            String className = file.getName().substring(0, file.getName().length() - 6);
 	            try{
-	              
+	            	//使用SystemClassLoader加载方式加载Class
 	                classes.add(Thread.currentThread().getContextClassLoader().loadClass(packageName + '.' + className));
 	            }
 	            catch (ClassNotFoundException e){

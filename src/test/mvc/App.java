@@ -1,12 +1,15 @@
 package test.mvc;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.coffee.ioc.active.ActiveBeanFactory;
+import org.coffee.ioc.active.ActiveConfig;
+import org.coffee.ioc.core.bean.BeanFactory;
+import org.coffee.ioc.core.bean.Config;
 
-import org.coffee.ioc.core.annotation.Component;
+import test.dao.Dao;
+import test.ser.Hello;
+import test.ser.IHello;
 
 
-@Component(singleton=false)
 public class App {
 
 	/**
@@ -14,14 +17,13 @@ public class App {
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		Pattern pattern = Pattern.compile("([a-zA-Z_]\\w*\\.)*[a-zA-Z_]\\w*");
-		//Pattern pattern = Pattern.compile("[a-bA-Z0-9]");
-		Matcher matcher =  pattern.matcher("_a ");
-
-		System.out.println(matcher.matches());
+		Config config  = new ActiveConfig();
+		config.addBean(Hello.class).setPropertyByType("dao");
+		config.addBean(Dao.class).setProperty("str","江南花落");
+		BeanFactory bf = ActiveBeanFactory.build(config);
+		IHello h = bf.getBean(IHello.class);
+		h.say();
 		
-		
-		System.out.print("abc".startsWith("abcd"));
 	}
 
 }

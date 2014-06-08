@@ -1,6 +1,9 @@
 package org.coffee.ioc.core.bean;
 
-import org.coffee.ioc.core.processor.BeanProcessor;
+import java.util.Map;
+import java.util.Set;
+
+import org.coffee.ioc.core.processor.Processor;
 
 
 public interface Config {
@@ -13,7 +16,8 @@ public interface Config {
 	 * */
 	Bean addBean(String name,Class<?> class0);
 	/**
-	 * 构建一个bean 到 Config中, 如果已经存在同名bean, 则抛出运行时异常
+	 * 构建一个bean 到 Config中并且以class0的类名为BeanName 
+	 * 如果已经存在同名bean, 则抛出运行时异常
 	 * */
 	Bean addBean(Class<?> class0);
 	
@@ -26,8 +30,15 @@ public interface Config {
 	/**
 	 * 添加Bean处理器
 	 * @param processor 非空参数
-	 * @throws processor 为空或者 没有实现指定接口
+	 * @throws processor 为空或者
 	 * */
-	Config addProcessor(BeanProcessor processor);
-	
+	Config addProcessor(Processor processor);
+	/**
+	 * 获得Config中配置完的Bean
+	 * */
+	public Map<String, Bean> getBeans();
+	/**
+	 * 获得Config中配置的处理器
+	 * */
+	public Set<Processor> getProcessors();
 }

@@ -1,5 +1,7 @@
 package org.coffee.ioc.core.bean;
 
+import java.util.Map;
+
 public interface Bean {
 	/**
 	 * 设置属性
@@ -24,4 +26,25 @@ public interface Bean {
 	 * 是否延迟初始化, 默认为true
 	 * */
 	Bean setLazy(boolean lazy);
+	
+	/**
+	 * 获取的当前Bean中所有关于属性的配置
+	 * */
+	public Map<String, Property> getProperties();
+	/**
+	 * 当前Bean是否为单例类型
+	 * */
+	public boolean isSingleton();
+	/**
+	 * 是否延迟初始化
+	 * */
+	public boolean isLazy();
+	/**
+	 * 获得该bean指向的Class
+	 * */
+	public Class<?> getClass0();
+	/**
+	 * 获得Bean的名字
+	 * */
+	public String getName();
 }

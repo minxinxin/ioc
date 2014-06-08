@@ -6,7 +6,7 @@ package org.coffee.ioc.core.processor;
  * 该接口方法进行配置
  * </pre>
  * */
-public interface BeanProcessor {
+public interface Processor {
 	/**
 	 * 在调用Bean的init方法之前
 	 * @param instance Bean对象

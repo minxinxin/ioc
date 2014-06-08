@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.coffee.ioc.core.bean.Bean;
+import org.coffee.ioc.core.bean.Property;
 
 public class ActiveBean implements Bean{
 	
@@ -36,7 +37,7 @@ public class ActiveBean implements Bean{
 			throw new RuntimeException("属性名为null或者为空字符串!");
 		if(properties.get(name)!=null)
 			throw new RuntimeException("已经存在同属性名!");
-		properties.put(name, new Property(Property.Type.byManual,value));
+		properties.put(name, new ActiveProperty(ActiveProperty.Type.byManual,value));
 		return this;
 	}
 	public Bean setPropertyByName(String pName, String rName) {
@@ -45,7 +46,7 @@ public class ActiveBean implements Bean{
 			throw new RuntimeException("属性名为null或者为空字符串!");
 		if(properties.get(pName)!=null)
 			throw new RuntimeException("已经存在同属性名!");
-		properties.put(pName,new Property(Property.Type.byName,rName));
+		properties.put(pName,new ActiveProperty(ActiveProperty.Type.byName,rName));
 		return this;
 	}
 
@@ -54,7 +55,7 @@ public class ActiveBean implements Bean{
 			throw new RuntimeException("属性名为null或者为空字符串!");
 		if(properties.get(name)!=null)
 			throw new RuntimeException("已经存在同属性名!");
-		properties.put(name,new Property(Property.Type.byType,null));
+		properties.put(name,new ActiveProperty(ActiveProperty.Type.byType,null));
 		return this;
 	}
 	
