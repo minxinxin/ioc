@@ -3,13 +3,12 @@ package test.ser;
 import org.coffee.ioc.core.annotation.Autowired;
 import org.coffee.ioc.core.annotation.Component;
 import org.coffee.ioc.core.bean.BeanFactory;
+import org.coffee.ioc.core.factory.FactoryBean;
 import org.coffee.ioc.core.lifecycle.BeanLifeCycle;
 
 import test.dao.IDao;
 
-
-@Component()
-class I implements IHello , BeanLifeCycle{
+class I implements IHello , BeanLifeCycle,FactoryBean{
 	@Autowired
 	IDao dao;
 	
@@ -51,10 +50,27 @@ class I implements IHello , BeanLifeCycle{
 		// TODO Auto-generated method stub
 		
 	}
+
+
+	public Object getObject() {
+		return "String";
+	}
+
+
+	public Class<?> getObjectType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	public boolean isSingleton() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 	
 	
 }
-
+@Component()
 public class Hello extends I{
 
 

@@ -14,91 +14,109 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.coffee.ioc.core.annotation.Autowired;
 import org.coffee.ioc.core.annotation.Component;
 import org.coffee.ioc.core.bean.Bean;
 import org.coffee.ioc.core.bean.Config;
 import org.coffee.ioc.core.processor.Processor;
+import org.coffee.util.StringUtil;
 
 public class ActiveConfig implements Config{
 
 	Map<String,Bean> beans = new HashMap<String,Bean>(10);
 	
 	Set<Processor> processors = new HashSet<Processor>(5);
-	
-	Pattern pattern = Pattern.compile("([a-zA-Z_]\\w*\\.)*[a-zA-Z_]\\w*");
-	
+		
 	public Bean addBean(String name, Class<?> class0) {
-		if(class0 == null)
-			throw new RuntimeException("class 参数不能为空");
-
-		if(name == null)
-			name = class0.getName();
-		
-		if(name.trim().equals(""))
-			throw new RuntimeException("name 不能为空字符串");
-		if(beans.get(name) != null)
-			throw new RuntimeException("Config 中已经存在同名Bean");
-		
-		ActiveBean ab = new ActiveBean(name,class0);
-		beans.put(name, ab);
-		return ab;
+		return addBean(name,class0,false);
 	}
-
 	public Bean addBean(Class<?> class0) {
-		return addBean(null,class0);
+		return addBean(null,class0,false);
 	}
-
+	/**
+	 * 添加Bean到beans中
+	 * */
+	private Bean addBean(String name,Class<?> class0, boolean useComponent){
+		if(class0 == null)
+			throw new RuntimeException("class 参数不能为空:"+name);
+		boolean lazy = false;
+		boolean singleton = true;
+		//正确的beanName
+		String beanName = null;
+		if(useComponent){
+			if(name != null){
+				throw new RuntimeException(name+" 已经使用了Component,则不需要使用name属性");
+			}
+			Component component = class0.getAnnotation(Component.class);
+			if(component == null)
+				throw new RuntimeException("指定的Class: "+class0+"并不存在@Component");
+			beanName = component.value();
+			//如果没有配置beanName ,则使用默认类名作为Bean名字,注默认@Component的value = ""
+			if(beanName.equals(""))
+				beanName = class0.getName();
+			lazy = component.lazy();
+			singleton = component.singleton();
+		}else{
+			if(class0.getAnnotation(Component.class) != null){
+				throw new RuntimeException(class0+"指定的Bean中存在@Component");
+			}
+			beanName = name;
+			//如果没有配置beanName ,则使用默认类名作为Bean名字
+			if(beanName == null )
+				beanName = class0.getName();
+		}
+		if(StringUtil.isInvaildString(beanName, "[a-zA-Z].*")){
+			throw new RuntimeException(name+" 不符合规则");
+		}
+		//检测是否已经存在同名字的bean
+		if(beans.get(beanName) != null)
+			throw new RuntimeException("Config 中已经存在同名Bean:"+name);
+		Bean bean = new ActiveBean(beanName,class0);
+		bean.setLazy(lazy);
+		bean.setSingleton(singleton);
+		//对属性名进行@Autowired进行配置
+		//配置Autowired注解
+		autowired(bean);
+		//添加到beans中
+		beans.put(beanName, bean);
+		return bean;
+	}
+	//根据类中的@Autowired注解添加属性注入标记都Bean中
+	private void autowired(Bean bean){
+		for(Class<?> cls = bean.getClass0() ; cls != Object.class;
+				cls = cls.getSuperclass()){
+			for(Field field : cls.getDeclaredFields()){
+				Autowired autowired  = field.getAnnotation(Autowired.class);
+				//忽略没有标记的属性
+				if(autowired == null)
+					continue;
+				if(StringUtil.isInvaildString(autowired.value(), null)){
+					//byType
+					bean.setPropertyByType(field.getName());
+				}else{
+					//byName
+					bean.setPropertyByName(field.getName(), autowired.value());
+				}
+			}
+		}
+	}
 	public Config addAutoScanPath(String packpath) {
-		if(packpath == null || packpath.trim().equals(""))
-			throw new RuntimeException("路径不能为空");
-		Matcher  m = pattern.matcher(packpath);
-		if(!m.matches())
-			throw new RuntimeException("路径不符合规范, 应该为org.coffee格式");
+		if(StringUtil.isInvaildString(packpath, "([a-zA-Z_]\\w*\\.)*[a-zA-Z_]\\w*"))
+			throw new RuntimeException("扫描路径不可用");
 		//对路径中的Class对象进行填写到Bean中
 		for(Class<?> class0  : getClasses(packpath)){
-			//忽略接口 和 abstact以及私有类型的class
-			int mod = class0.getModifiers();
-			if(!Modifier.isInterface(mod) && !Modifier.isAbstract(mod) ){
-				Component compoent = class0.getAnnotation(Component.class);
-				if(compoent != null){
-					Bean bean = null;
-					if(compoent.value().equals("")){
-						//默认使用class类名
-						bean = addBean(class0);
-					}else{
-						bean = addBean(compoent.value(),class0);
-					}
-					//配置属性
-					bean.setLazy(compoent.lazy());
-					bean.setSingleton(compoent.singleton());
-					//配置Autowired注解
-					for(Class<?> cls = class0 ; cls != Object.class;
-							cls = cls.getSuperclass()){
-
-						for(Field field : cls.getDeclaredFields()){
-							Autowired autowired  = field.getAnnotation(Autowired.class);
-							//忽略没有标记的属性
-							if(autowired == null)
-								continue;
-							if(autowired.value().equals("")){
-								//byType
-								bean.setPropertyByType(field.getName());
-							}else{
-								//byName
-								bean.setPropertyByName(field.getName(), autowired.value());
-							}
-						}
-					}
-				}
+			
+			//忽略没有@Component的类
+			if(class0.getAnnotation(Component.class) != null){
+				int mod = class0.getModifiers();
+				if(Modifier.isInterface(mod) || Modifier.isAbstract(mod))
+					throw new RuntimeException("@Component所在的类不能为接口或者抽象类");
+				addBean(null,class0,true);
 			}
 		}
 		return this;
 	}
-
 	public Config addProcessor(Processor processor) {
 		if(processor==null)
 			throw new RuntimeException("processor 不能为null");
@@ -116,11 +134,17 @@ public class ActiveConfig implements Config{
 	}
 
 	//-----------------------------------------------------------
-
-	/**
+	/***
+	 * 
+	 *<pre>
+	 * 扫描包的下的类来自于http://guoliangqi.iteye.com/blog/644876, 
+	 * 感谢@author:yznxing
+	 * 注意, 这个类库去除了扫描jar包.
+	 * 
 	 * 从包package中获取所有的Class(不能从jar等介质中获取)
 	 * @param pack 路径名(org.coffee)
-	 * @return
+	 * @return ClassSet
+	 * </pre>
 	 */
 	static Set <Class<?>> getClasses(String pack){
 	

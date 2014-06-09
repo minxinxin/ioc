@@ -5,57 +5,51 @@ import java.util.Map;
 
 import org.coffee.ioc.core.bean.Bean;
 import org.coffee.ioc.core.bean.Property;
+import org.coffee.util.StringUtil;
 
 public class ActiveBean implements Bean{
 	
 	Map<String,Property> properties = new HashMap<String,Property>(4);
 	
-	boolean singleton = true;
+	boolean singleton;
 	
-	boolean lazy = true;
+	boolean lazy;
 	
 	Class<?> class0;
 	
 	String name;
 	
 	public  ActiveBean(String name,Class<?> class0){
-		if(class0 == null)
-			throw new RuntimeException("class 参数不能为空");
+		if(name == null || class0 == null)
+			throw new RuntimeException("name 或者 class0  不能为空");
+		
 		this.class0 = class0;
-		if(name == null){
-			//使用 class0的类名
-			this.name = class0.getName();
-		}else{
-			if(name.trim().equals(""))
-				throw new RuntimeException("名字不能为空字符串");
-			this.name = name;
-		}
+		this.name = name;
 	}
 	
 	public Bean setProperty(String name, Object value) {
-		if(name == null || name.trim().equals(""))
+		if(StringUtil.isInvaildString(name, null))
 			throw new RuntimeException("属性名为null或者为空字符串!");
 		if(properties.get(name)!=null)
-			throw new RuntimeException("已经存在同属性名!");
-		properties.put(name, new ActiveProperty(ActiveProperty.Type.byManual,value));
+			throw new RuntimeException(this.name + "已经存在同属性名: "+name);
+		properties.put(name, new ActiveProperty(Property.Type.byManual,value));
 		return this;
 	}
 	public Bean setPropertyByName(String pName, String rName) {
-		if(pName == null || pName.trim().equals("") 
-				|| rName == null || rName.trim().equals(""))
-			throw new RuntimeException("属性名为null或者为空字符串!");
+		if(StringUtil.isInvaildString(pName,null) || StringUtil.isInvaildString(rName, null))
+			throw new RuntimeException(this.name+" 属性名为null或者为空字符串  : setPropertyByName() ");
 		if(properties.get(pName)!=null)
-			throw new RuntimeException("已经存在同属性名!");
-		properties.put(pName,new ActiveProperty(ActiveProperty.Type.byName,rName));
+			throw new RuntimeException(this.name+"已经存在同属性名: "+pName);
+		properties.put(pName,new ActiveProperty(Property.Type.byName,rName));
 		return this;
 	}
 
 	public Bean setPropertyByType(String name) {
-		if(name == null || name.trim().equals(""))
-			throw new RuntimeException("属性名为null或者为空字符串!");
+		if(StringUtil.isInvaildString(name, null))
+			throw new RuntimeException(this.name + "属性名为null或者为空字符串");
 		if(properties.get(name)!=null)
-			throw new RuntimeException("已经存在同属性名!");
-		properties.put(name,new ActiveProperty(ActiveProperty.Type.byType,null));
+			throw new RuntimeException(this.name + "已经存在同属性名 : "+name);
+		properties.put(name,new ActiveProperty(Property.Type.byType,null));
 		return this;
 	}
 	

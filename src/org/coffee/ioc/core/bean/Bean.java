@@ -28,7 +28,11 @@ public interface Bean {
 	Bean setLazy(boolean lazy);
 	
 	/**
+	 * <pre>
 	 * 获取的当前Bean中所有关于属性的配置
+	 * String->属性名
+	 * Property->具体属性配置
+	 * </pre>
 	 * */
 	public Map<String, Property> getProperties();
 	/**

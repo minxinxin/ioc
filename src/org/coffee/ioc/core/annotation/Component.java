@@ -24,5 +24,5 @@ import java.lang.annotation.Target;
 public @interface Component {
 	String value() default "";
 	boolean singleton() default true;
-	boolean lazy() default true;
+	boolean lazy() default false;
 }

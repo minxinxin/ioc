@@ -19,16 +19,16 @@ public class App {
 	 */
 	public static void main(String[] args) throws Exception {
 		Config config  = new ActiveConfig();
-		//config.addBean("hello",Hello.class).setPropertyByType("dao");
-		//config.addBean("dao",Dao.class).setProperty("str","江南花落");
-		
-		config.addProcessor(new A());
+		/*config.addBean("hello",Hello.class);
+		config.addBean("dao",Dao.class).setProperty("str","江南花落");
+		*/
 		config.addAutoScanPath("test.dao");
 		config.addAutoScanPath("test.ser");
+		config.addProcessor(new A());
 		BeanFactory bf = ActiveBeanFactory.build(config);
 		IHello h = bf.getBean(IHello.class);
-		h.say();
 		
+	
 	}
 
 }

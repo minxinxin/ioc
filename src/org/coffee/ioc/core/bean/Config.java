@@ -34,7 +34,11 @@ public interface Config {
 	 * */
 	Config addProcessor(Processor processor);
 	/**
+	 * <pre>
 	 * 获得Config中配置完的Bean
+	 * String->beanName
+	 * Bean->具体的Bean
+	 * </pre>
 	 * */
 	public Map<String, Bean> getBeans();
 	/**
