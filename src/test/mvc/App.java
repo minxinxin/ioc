@@ -27,7 +27,7 @@ public class App {
 		config.addProcessor(new A());
 		BeanFactory bf = ActiveBeanFactory.build(config);
 		IHello h = bf.getBean(IHello.class);
-		
+		h.say();
 	
 	}
 
